@@ -66,6 +66,8 @@ services:
     stdin_open: true
     volumes:
       - .:/app
+    networks:
+      - internship-challenge-network
 
 networks:
   internship-challenge-network:
