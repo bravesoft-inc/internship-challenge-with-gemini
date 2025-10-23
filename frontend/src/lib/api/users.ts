@@ -19,9 +19,14 @@ export interface User {
   updated_at?: string;
 }
 
-export const fetchUsers = async () => {
+export const fetchUsers = async (page: number = 1, perPage: number = 10) => {
   try {
-    const response = await axios.get(`${API_URL}/users/all`);
+    const response = await axios.get(`${API_URL}/users`, {
+      params: {
+        page,
+        per_page: perPage,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching users:', error);

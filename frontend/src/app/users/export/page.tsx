@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { exportUsers } from "../../../lib/api/users";
+import { Button } from "@/components/ui/button";
 
 export default function ExportUsersPage() {
   const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ export default function ExportUsersPage() {
       
       await exportUsers();
       setSuccess("エクスポートが完了しました。ダウンロードが開始されます。");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error exporting users:", err);
       setError("エクスポートに失敗しました。");
     } finally {
@@ -60,13 +61,13 @@ export default function ExportUsersPage() {
         )}
         
         <div className="flex items-center justify-between">
-          <button
+          <Button
             onClick={handleExport}
             disabled={loading}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           >
             {loading ? "エクスポート中..." : "エクスポートする"}
-          </button>
+          </Button>
         </div>
       </div>
       

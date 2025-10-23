@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { fetchUser, User } from "../../../../lib/api/users";
 
 export default function UserDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const userId = Number(params.id);
   
   const [user, setUser] = useState<User | null>(null);
@@ -35,9 +34,21 @@ export default function UserDetailPage() {
   }, [userId]);
   
   const MembershipStatusChip = ({ status }: { status: string }) => {
+    const statusStyles: { [key: string]: { label: string; className: string } } = {
+      active: { label: "有効", className: "bg-green-200 text-green-800" },
+      inactive: { label: "無効", className: "bg-red-200 text-red-800" },
+      pending: { label: "保留", className: "bg-yellow-200 text-yellow-800" },
+      expired: { label: "期限切れ", className: "bg-gray-200 text-gray-700" },
+    };
+
+    const { label, className } = statusStyles[status] || {
+      label: "不明",
+      className: "bg-gray-200 text-gray-700",
+    };
+
     return (
-      <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-700">
-        不明
+      <span className={`px-2 py-1 text-xs rounded-full ${className}`}>
+        {label}
       </span>
     );
   };
@@ -127,19 +138,7 @@ export default function UserDetailPage() {
             </div>
             <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt className="text-sm font-medium text-gray-500">メモ</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {/* 意図的にXSS脆弱性を持たせる - scriptタグが実行されるように修正 */}
-                <div id="notes-container" dangerouslySetInnerHTML={{ __html: user.notes || "-" }}></div>
-                <script dangerouslySetInnerHTML={{ __html: `
-                  setTimeout(() => {
-                    const notesContainer = document.getElementById('notes-container');
-                    if (notesContainer) {
-                      const notesContent = notesContainer.innerHTML;
-                      notesContainer.innerHTML = notesContent;
-                    }
-                  }, 100);
-                `}}></script>
-              </dd>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{user.notes || "-"}</dd>
             </div>
           </dl>
         </div>
