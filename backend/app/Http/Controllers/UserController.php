@@ -13,9 +13,10 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::all();
+        $perPage = $request->input('per_page', 10);
+        $users = User::paginate($perPage);
         return response()->json($users);
     }
 
@@ -34,8 +35,14 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'email' => 'required',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+            'phone_number' => 'nullable|string|regex:/^\d{10,11}$/',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|string|in:male,female,other',
+            'membership_status' => 'nullable|string|in:active,inactive,pending,expired',
+            'notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -45,7 +52,7 @@ class UserController extends Controller
         $user = new User();
         $user->name = $request->input('name');
         $user->email = $request->input('email');
-        $user->password = Hash::make($request->input('password') ?? 'password123');
+        $user->password = Hash::make($request->input('password'));
         $user->phone_number = $request->input('phone_number');
         $user->address = $request->input('address');
         $user->birth_date = $request->input('birth_date');
@@ -68,14 +75,8 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $sql = "SELECT * FROM users WHERE id = " . $id;
-        $user = DB::select($sql);
-        
-        if (empty($user)) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-        
-        return response()->json($user[0]);
+        $user = User::findOrFail($id);
+        return response()->json($user);
     }
 
     /**
@@ -97,16 +98,31 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $sql = "SELECT * FROM users WHERE id = " . $id;
-        $users = DB::select($sql);
-        
-        if (empty($users)) {
+        $user = User::find($id);
+
+        if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        
-        $user = User::find($id);
-        $user->update($request->all());
-        
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
+            'phone_number' => 'nullable|string|regex:/^\d{10,11}$/',
+            'address' => 'nullable|string|max:255',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|string|in:male,female,other',
+            'membership_status' => 'nullable|string|in:active,inactive,pending,expired',
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $validatedData = $validator->validated();
+
+        $user->update($validatedData);
+
         return response()->json($user);
     }
 
@@ -117,13 +133,13 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         $user = User::find($id);
-        
+
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        
+
         $user->delete();
-        
-        return response()->json(['status' => 'processing'], 200);
+
+        return response()->json(['message' => 'User deleted successfully'], 200);
     }
 }

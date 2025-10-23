@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { fetchUser, updateUser, User } from "../../../../lib/api/users";
+import { Button } from "@/components/ui/button";
 
 export default function EditUserPage() {
   const params = useParams();
@@ -79,11 +80,11 @@ export default function EditUserPage() {
       
       await updateUser(userId, userData);
       router.push(`/users/detail/${userId}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error updating user:", err);
       
-      if (err.response && err.response.data && err.response.data.errors) {
-        setServerErrors(err.response.data.errors);
+      if (typeof err === 'object' && err !== null && 'response' in err && typeof (err as { response: { data: unknown } }).response === 'object' && (err as { response: { data: unknown } }).response !== null && 'data' in (err as { response: { data: unknown } }).response && typeof (err as { response: { data: { errors: unknown } } }).response.data === 'object' && (err as { response: { data: { errors: unknown } } }).response.data !== null && 'errors' in (err as { response: { data: { errors: Record<string, string[]> } } }).response.data) {
+        setServerErrors((err as { response: { data: { errors: Record<string, string[]> } } }).response.data.errors);
         setError("入力内容に問題があります。");
       } else {
         setError("ユーザー更新に失敗しました。");
@@ -266,13 +267,13 @@ export default function EditUserPage() {
         </div>
         
         <div className="flex items-center justify-between">
-          <button
+          <Button
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             type="submit"
             disabled={submitting}
           >
             {submitting ? "処理中..." : "更新する"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

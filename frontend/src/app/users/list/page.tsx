@@ -4,6 +4,19 @@ import { useState, useEffect, Fragment } from "react";
 import { fetchUsers } from "../../../lib/api/users";
 import Link from "next/link";
 import { User } from "../../../lib/api/users";
+import { Button } from "@/components/ui/button";
+
+interface PaginatedUsersResponse {
+  data: User[];
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  first_page_url: string;
+  last_page_url: string;
+  next_page_url: string | null;
+  prev_page_url: string | null;
+}
 
 export default function UserListPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -11,15 +24,17 @@ export default function UserListPage() {
   const [error, setError] = useState<string | null>(null);
   
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
   
   useEffect(() => {
     const loadUsers = async () => {
       try {
         setLoading(true);
-        const data = await fetchUsers();
-        console.log("API response:", data);
-        setUsers(data.users || []);
+        const response: PaginatedUsersResponse = await fetchUsers(currentPage);
+        setUsers(response.data || []);
+        setTotalPages(response.last_page);
+        setTotalUsers(response.total);
         setError(null);
       } catch (err) {
         setError("ユーザーデータの取得に失敗しました。");
@@ -30,13 +45,7 @@ export default function UserListPage() {
     };
     
     loadUsers();
-  }, []);
-  
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = users.slice(indexOfFirstItem, indexOfLastItem);
-  
-  const totalPages = Math.ceil(users.length / itemsPerPage);
+  }, [currentPage]);
   
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -53,6 +62,9 @@ export default function UserListPage() {
     return <div className="text-center py-10 text-red-500">{error}</div>;
   }
   
+  const indexOfFirstItem = (currentPage - 1) * 10;
+  const indexOfLastItem = indexOfFirstItem + users.length;
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -78,8 +90,8 @@ export default function UserListPage() {
             </tr>
           </thead>
           <tbody>
-            {currentItems.length > 0 ? (
-              currentItems.map((user) => (
+            {users.length > 0 ? (
+              users.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="py-2 px-4 border-b dark:border-gray-600 text-gray-900 dark:text-gray-100">{user.id}</td>
                   <td className="py-2 px-4 border-b dark:border-gray-600 text-gray-900 dark:text-gray-100">{user.name}</td>
@@ -126,26 +138,26 @@ export default function UserListPage() {
             {/* 最初のページへのリンク */}
             {currentPage > 1 && (
               <li>
-                <button
+                <Button
                   onClick={() => handlePageChange(1)}
                   className="px-3 py-1 border dark:border-gray-600 bg-white dark:bg-gray-800 text-blue-500 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   aria-label="最初のページ"
                 >
                   &laquo;
-                </button>
+                </Button>
               </li>
             )}
             
             {/* 前のページへのリンク */}
             {currentPage > 1 && (
               <li>
-                <button
+                <Button
                   onClick={() => handlePageChange(currentPage - 1)}
                   className="px-3 py-1 border dark:border-gray-600 bg-white dark:bg-gray-800 text-blue-500 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   aria-label="前のページ"
                 >
                   &lsaquo;
-                </button>
+                </Button>
               </li>
             )}
             
@@ -170,7 +182,7 @@ export default function UserListPage() {
                       </li>
                     )}
                     <li>
-                      <button
+                      <Button
                         onClick={() => handlePageChange(page)}
                         className={`px-3 py-1 border dark:border-gray-600 ${
                           currentPage === page
@@ -180,7 +192,7 @@ export default function UserListPage() {
                         aria-current={currentPage === page ? "page" : undefined}
                       >
                         {page}
-                      </button>
+                      </Button>
                     </li>
                   </Fragment>
                 );
@@ -189,26 +201,26 @@ export default function UserListPage() {
             {/* 次のページへのリンク */}
             {currentPage < totalPages && (
               <li>
-                <button
+                <Button
                   onClick={() => handlePageChange(currentPage + 1)}
                   className="px-3 py-1 border dark:border-gray-600 bg-white dark:bg-gray-800 text-blue-500 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   aria-label="次のページ"
                 >
                   &rsaquo;
-                </button>
+                </Button>
               </li>
             )}
             
             {/* 最後のページへのリンク */}
             {currentPage < totalPages && (
               <li>
-                <button
+                <Button
                   onClick={() => handlePageChange(totalPages)}
                   className="px-3 py-1 border dark:border-gray-600 bg-white dark:bg-gray-800 text-blue-500 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   aria-label="最後のページ"
                 >
                   &raquo;
-                </button>
+                </Button>
               </li>
             )}
           </ul>
@@ -216,8 +228,8 @@ export default function UserListPage() {
       </div>
       
       <div className="text-sm text-gray-500 dark:text-gray-300 mt-4">
-        全{users.length}件中 {indexOfFirstItem + 1}-
-        {indexOfLastItem > users.length ? users.length : indexOfLastItem}件を表示
+        全{totalUsers}件中 {indexOfFirstItem + 1}-
+        {indexOfLastItem > totalUsers ? totalUsers : indexOfLastItem}件を表示
       </div>
     </div>
   );

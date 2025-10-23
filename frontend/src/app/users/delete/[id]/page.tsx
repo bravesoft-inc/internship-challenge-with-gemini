@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { fetchUser, deleteUser, User } from "../../../../lib/api/users";
+import { Button } from "@/components/ui/button";
 
 export default function DeleteUserPage() {
   const params = useParams();
@@ -44,6 +45,9 @@ export default function DeleteUserPage() {
       setDeleting(false);
       setDeleteSuccess(true);
       setError(null);
+      setTimeout(() => {
+        router.push("/users/list");
+      }, 2000);
     } catch (err) {
       setError("ユーザー削除に失敗しました。");
       console.error(err);
@@ -105,13 +109,13 @@ export default function DeleteUserPage() {
         </div>
         
         <div className="flex space-x-4">
-          <button
+          <Button
             onClick={handleDelete}
             disabled={deleting}
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
           >
             {deleting ? "削除中..." : "削除する"}
-          </button>
+          </Button>
           <Link 
             href={`/users/detail/${userId}`}
             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { importUsers } from "../../../lib/api/users";
+import { Button } from "@/components/ui/button";
 
 export default function ImportUsersPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -43,10 +44,14 @@ export default function ImportUsersPage() {
       if (fileInput) {
         fileInput.value = '';
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error importing users:", err);
       
-      setError(err.response?.data?.error || "不明なエラーが発生しました。");
+      if (typeof err === 'object' && err !== null && 'response' in err && typeof (err as { response: { data: unknown } }).response === 'object' && (err as { response: { data: unknown } }).response !== null && 'data' in (err as { response: { data: unknown } }).response && typeof (err as { response: { data: { error: unknown } } }).response.data === 'object' && (err as { response: { data: { error: unknown } } }).response.data !== null && 'error' in (err as { response: { data: { error: string } } }).response.data) {
+        setError((err as { response: { data: { error: string } } }).response.data.error);
+      } else {
+        setError("不明なエラーが発生しました。");
+      }
     } finally {
       setLoading(false);
     }
@@ -101,13 +106,13 @@ export default function ImportUsersPage() {
           </div>
           
           <div className="flex items-center justify-between">
-            <button
+            <Button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="submit"
               disabled={loading || !file}
             >
               {loading ? "インポート中..." : "インポートする"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CsvController;
 use App\Http\Controllers\VulnerableController;
-use App\Http\Controllers\PaginationController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('users/all', [PaginationController::class, 'getUsersAll']);
+
 Route::post('users/import', [CsvController::class, 'import']);
 Route::get('users/export', [CsvController::class, 'export']);
 
